@@ -193,7 +193,7 @@
         <div class="res-main">
           <span class="res-ref">${r.id}</span>
           <h3>${r.car || 'Demande de réservation'}</h3>
-          <p class="res-meta">${frDate(r.from)} → ${frDate(r.to)} · ${r.days || 0} jour${(r.days || 0) > 1 ? 's' : ''} · ${r.pickup || 'Paris 11ᵉ'}</p>
+          <p class="res-meta">${frDate(r.from)} → ${frDate(r.to)} · ${r.days || 0} jour${(r.days || 0) > 1 ? 's' : ''} · ${r.pickup || 'Aubervilliers'}</p>
           ${r.options && r.options.length ? `<p class="res-opts">Options : ${r.options.join(', ')}</p>` : ''}
         </div>
         <div class="res-side">

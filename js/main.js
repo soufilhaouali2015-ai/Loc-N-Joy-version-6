@@ -632,7 +632,7 @@
   let searchDays = 0;
   /* véhicule et dates retenus avant l'envoi du formulaire de réservation */
   let pending = null;
-  let searchCtx = { city: 'Paris 11ᵉ', from: '', to: '' };
+  let searchCtx = { city: 'Aubervilliers', from: '', to: '' };
 
   /* ---- la demande part vers l'espace admin (stockage local) ---- */
   function saveReservation(name, email, notes) {
