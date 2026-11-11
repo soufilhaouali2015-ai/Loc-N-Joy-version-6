@@ -466,6 +466,27 @@
       sil: 'car', c1: '#4A1220', c2: '#B03A52', stamp: '',
       chips: ['5 places', 'Essence', '140 ch'],
       specs: { Places: '5', 'Boîte': 'Automatique EDC', Carburant: 'Essence', Puissance: '140 ch', Coffre: '434 L', Consommation: '6,0 L/100', Caution: '800 €' } },
+    /* ---- citadines sans caution, boîte manuelle ---- */
+    { id: 'ds3', name: 'DS3 1.6 HDi 112', cat: 'citadine', catLabel: 'Citadine · Boîte manuelle', price: 50,
+      imgs: ['01','02','03','04','05','06'].map(n => `images/citroen-ds3-hdi-112/${n}.jpg`),
+      sil: 'car', c1: '#3A1420', c2: '#7A8290', stamp: 'Sans caution',
+      chips: ['5 places', 'Diesel', '112 ch'],
+      specs: { Places: '5', 'Boîte': 'Manuelle 6 vitesses', Carburant: 'Diesel', Puissance: '112 ch', Coffre: '285 L', Consommation: '4,2 L/100', Caution: 'Sans caution' } },
+    { id: 'p208', name: 'Peugeot 208 PureTech 82', cat: 'citadine', catLabel: 'Citadine · Boîte manuelle', price: 50,
+      imgs: ['01','02','03','04','05'].map(n => `images/peugeot-208/${n}.jpg`),
+      sil: 'car', c1: '#0E1116', c2: '#4A5160', stamp: 'Sans caution',
+      chips: ['5 places', 'Essence', '82 ch'],
+      specs: { Places: '5', 'Boîte': 'Manuelle 5 vitesses', Carburant: 'Essence', Puissance: '82 ch', Coffre: '285 L', Consommation: '4,5 L/100', Caution: 'Sans caution' } },
+    { id: 'twingo3', name: 'Twingo 3', cat: 'citadine', catLabel: 'Citadine · Boîte manuelle', price: 50,
+      imgs: ['01','02','03','04','05'].map(n => `images/renault-twingo-3/${n}.jpg`),
+      sil: 'car', c1: '#121212', c2: '#B32630', stamp: 'Sans caution',
+      chips: ['4 places', 'Essence', '69 ch'],
+      specs: { Places: '4', 'Boîte': 'Manuelle 5 vitesses', Carburant: 'Essence', Puissance: '69 ch', Coffre: '219 L', Consommation: '4,5 L/100', Caution: 'Sans caution' } },
+    { id: 'fiat500', name: 'Fiat 500 TwinAir 85', cat: 'citadine', catLabel: 'Citadine · Boîte manuelle', price: 50,
+      imgs: ['01','02','03','04'].map(n => `images/fiat-500/${n}.jpg`),
+      sil: 'car', c1: '#3B3833', c2: '#8C857A', stamp: 'Sans caution',
+      chips: ['4 places', 'Essence', '85 ch'],
+      specs: { Places: '4', 'Boîte': 'Manuelle 5 vitesses', Carburant: 'Essence', Puissance: '85 ch', Coffre: '185 L', Consommation: '4,0 L/100', Caution: 'Sans caution' } },
   ];
 
   const fleetGrid = $('#fleetGrid');
@@ -532,7 +553,7 @@
     fleetGrid.innerHTML = FLEET.map(v => `
       <article class="card" data-tilt data-id="${v.id}" data-cat="${v.cat}">
         <div class="card-media">${mediaHTML(v)}
-          ${v.stamp ? `<span class="card-stamp${/V8|Légende/.test(v.stamp) ? ' red' : ''}">${v.stamp}</span>` : ''}
+          ${v.stamp ? `<span class="card-stamp${/V8|Légende|Sans caution/.test(v.stamp) ? ' red' : ''}">${v.stamp}</span>` : ''}
         </div>
         <div class="card-foot">
           <h3>${v.name}</h3>

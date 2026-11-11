@@ -10,6 +10,10 @@ La première photo sert aussi de visuel unique dans la fiche technique.
 | `golf-8-r-line/` | 01 à 06 |
 | `clio-5-e-tech/` | 01 à 07 |
 | `megane-4-intense/` | 01 à 05 |
+| `citroen-ds3-hdi-112/` | 01 à 06 |
+| `peugeot-208/` | 01 à 05 |
+| `renault-twingo-3/` | 01 à 05 |
+| `fiat-500/` | 01 à 04 |
 
 Format : JPG 1280 × 800 (16/10), qualité 85, progressif.
 

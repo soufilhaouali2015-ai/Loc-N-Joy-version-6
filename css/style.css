@@ -404,17 +404,21 @@ html { scrollbar-color: var(--beam) var(--night); scrollbar-width: thin; }
 
 .fleet-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.6rem; }
 .fleet-grid .card { grid-column: span 2; }
-.fleet-grid .card:nth-child(4) { grid-column: 2 / span 2; }
-.fleet-grid .card:nth-child(5) { grid-column: 4 / span 2; }
+/* rangées de 3 ; une dernière rangée incomplète reste centrée, quel que soit le nombre de voitures */
+.fleet-grid .card:nth-child(3n+1):nth-last-child(2) { grid-column: 2 / span 2; }
+.fleet-grid .card:nth-child(3n+2):last-child { grid-column: 4 / span 2; }
+.fleet-grid .card:nth-child(3n+1):last-child { grid-column: 3 / span 2; }
 @media (max-width: 1080px) {
   .fleet-grid { grid-template-columns: repeat(2, 1fr); }
-  .fleet-grid .card { grid-column: auto; }
-  .fleet-grid .card:nth-child(4), .fleet-grid .card:nth-child(5) { grid-column: auto; }
-  .fleet-grid .card:nth-child(5) { grid-column: 1 / -1; max-width: min(100%, 460px); margin-inline: auto; width: 100%; }
+  .fleet-grid .card,
+  .fleet-grid .card:nth-child(3n+1):nth-last-child(2),
+  .fleet-grid .card:nth-child(3n+2):last-child,
+  .fleet-grid .card:nth-child(3n+1):last-child { grid-column: auto; }
+  .fleet-grid .card:nth-child(odd):last-child { grid-column: 1 / -1; max-width: min(100%, 460px); margin-inline: auto; width: 100%; }
 }
 @media (max-width: 640px) {
   .fleet-grid { grid-template-columns: 1fr; }
-  .fleet-grid .card:nth-child(5) { grid-column: auto; max-width: none; margin-inline: 0; }
+  .fleet-grid .card:nth-child(odd):last-child { grid-column: auto; max-width: none; margin-inline: 0; }
 }
 
 .card { background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
