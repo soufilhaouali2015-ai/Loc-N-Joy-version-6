@@ -19,7 +19,7 @@ Ou simplement ouvrir `index.html` dans un navigateur.
 - **Loader compteur de vitesse** : aiguille, arc et check-list de départ animés.
 - **Hero génératif** : canvas « autoroute de nuit » (marquage défilant, phares et feux arrière), le pointeur braque le point de fuite.
 - **Recherche de disponibilité** : ville, dates, catégorie → filtre la flotte et pré-remplit le calculateur.
-- **Catalogue flotte** (5 voitures, toutes en boîte automatique) : cartes 3D tilt en disposition 3 + 2, carrousel photo automatique par carte, fiche technique complète en modale façon constructeur (une seule photo). Voir `images/README.md`.
+- **Catalogue flotte** (9 voitures : citadines premium en boîte automatique, citadines petit budget en boîte manuelle et sans caution) : cartes 3D tilt en rangées de 3, carrousel photo automatique par carte, fiche technique complète en modale façon constructeur (une seule photo). Voir `images/README.md`.
 - **Espace Loc'N'Joy** (`espace.html`, hors référencement) : portail à deux entrées, compte particulier avec suivi des réservations, espace admin protégé avec KPI, filtres, recherche, changement de statut et export CSV. Les demandes envoyées depuis le site arrivent directement dans l'espace admin.
 - **Calculateur de prix** : durée, options, remise longue durée (−10 % dès 7 jours), total en direct.
 - **Mini-jeu « Le Slalom »** : évitez les cônes sur 800 m et gagnez un code promo (clavier, swipe, d-pad).
