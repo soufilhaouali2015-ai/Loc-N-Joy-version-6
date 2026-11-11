@@ -9,6 +9,7 @@
   const $$ = (s, c = document) => [...c.querySelectorAll(s)];
   const EUR = n => Math.round(n).toLocaleString('fr-FR') + ' €';
   const frDate = s => s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+  const frWhen = (d, t) => frDate(d) + (t ? ' ' + t.replace(':', 'h') : '');
 
   /* ======================================================================
      Accès admin
@@ -193,7 +194,7 @@
         <div class="res-main">
           <span class="res-ref">${r.id}</span>
           <h3>${r.car || 'Demande de réservation'}</h3>
-          <p class="res-meta">${frDate(r.from)} → ${frDate(r.to)} · ${r.days || 0} jour${(r.days || 0) > 1 ? 's' : ''} · ${r.pickup || 'Aubervilliers'}</p>
+          <p class="res-meta">${frWhen(r.from, r.fromTime)} → ${frWhen(r.to, r.toTime)} · ${r.days || 0} jour${(r.days || 0) > 1 ? 's' : ''} · ${r.pickup || 'Aubervilliers'}</p>
           ${r.options && r.options.length ? `<p class="res-opts">Options : ${r.options.join(', ')}</p>` : ''}
         </div>
         <div class="res-side">
@@ -273,7 +274,7 @@
         <td><b>${r.id}</b><span class="sub">${frDate(r.created)}</span></td>
         <td><b>${r.name || '—'}</b><span class="sub">${r.email || ''}</span></td>
         <td>${r.car || '—'}<span class="sub">${r.cat || ''}</span></td>
-        <td>${frDate(r.from)} → ${frDate(r.to)}<span class="sub">${r.days || 0} jour${(r.days || 0) > 1 ? 's' : ''}</span></td>
+        <td>${frWhen(r.from, r.fromTime)} → ${frWhen(r.to, r.toTime)}<span class="sub">${r.days || 0} jour${(r.days || 0) > 1 ? 's' : ''}</span></td>
         <td class="num">${EUR(r.total || 0)}</td>
         <td><span class="badge ${cls}">${label}</span></td>
         <td>
@@ -326,7 +327,7 @@
       <div class="d-grid">
         ${info('Client', r.name)}${info('Email', r.email)}
         ${info('Téléphone', r.phone)}${info('Catégorie', r.cat)}
-        ${info('Retrait', r.pickup)}${info('Période', frDate(r.from) + ' → ' + frDate(r.to))}
+        ${info('Retrait', r.pickup)}${info('Période', frWhen(r.from, r.fromTime) + ' → ' + frWhen(r.to, r.toTime))}
         ${info('Durée', (r.days || 0) + ' jour(s)')}${info('Prix par jour', r.price ? EUR(r.price) : '—')}
       </div>
       ${r.options && r.options.length ? `<div class="d-block">${info('Options', r.options.join(', '))}</div>` : ''}
@@ -353,7 +354,7 @@
     const head = ['Reference', 'Recue le', 'Client', 'Email', 'Telephone', 'Voiture', 'Categorie', 'Retrait', 'Du', 'Au', 'Jours', 'Prix jour', 'Total', 'Statut', 'Options', 'Message'];
     const rows = list.map(r => [
       r.id, r.created, r.name, r.email, r.phone, r.car, r.cat, r.pickup,
-      r.from, r.to, r.days, r.price, r.total,
+      r.from + (r.fromTime ? ' ' + r.fromTime : ''), r.to + (r.toTime ? ' ' + r.toTime : ''), r.days, r.price, r.total,
       (STATUS[r.status] || [])[1] || r.status, (r.options || []).join(' | '), r.notes,
     ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
     const blob = new Blob(['﻿' + [head.join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });

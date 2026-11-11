@@ -2,7 +2,7 @@
    LOCNJOY — Main Script · Night Road Edition (vanilla JS, zero dependency)
    Modules : loader compteur · smooth scroll · traînée de phares · magnétisme ·
              split/scramble text · marquee · canvas autoroute · flotte + modale ·
-             calculateur · reveals · accordéons · avis · recherche · chat ·
+             réservation (email) · reveals · accordéons · avis · recherche ·
              mini-jeu Le Slalom · ligne médiane · easter egg
    ========================================================================== */
 (() => {
@@ -625,45 +625,84 @@
   }
 
   /* ======================================================================
-     9. MODALE VÉHICULE + CALCULATEUR
+     9. RÉSERVATION — extras, dates et heures, modale, formulaire, envoi email
   ====================================================================== */
-  const modal = $('#modal');
-  let currentVehicle = null, lastFocus = null;
-  let searchDays = 0;
-  /* véhicule et dates retenus avant l'envoi du formulaire de réservation */
-  let pending = null;
-  let searchCtx = { city: 'Aubervilliers', from: '', to: '' };
+  /* Les demandes sont envoyées par email via FormSubmit (aucun serveur à gérer).
+     À la toute première demande, FormSubmit envoie à cette adresse un email
+     « Activate Form » : cliquez une fois sur le lien pour activer la réception. */
+  const BOOKING_EMAIL = 'locnjoy75@gmail.com';
+  const BOOKING_ENDPOINT = `https://formsubmit.co/ajax/${BOOKING_EMAIL}`;
+  const AGENCY = 'Agence · 42 Allée Albert Girard, Aubervilliers';
+  const PHONE = '07 66 69 71 51';
 
-  /* ---- la demande part vers l'espace admin (stockage local) ---- */
-  function saveReservation(name, email, notes) {
-    const days = (pending && pending.days) || searchDays || 1;
-    const from = searchCtx.from || new Date().toISOString().slice(0, 10);
-    const to = searchCtx.to || new Date(Date.parse(from) + days * 86400000).toISOString().slice(0, 10);
-    const entry = {
-      id: 'LNJ-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase(),
-      car: (pending && pending.car) || 'À définir avec l\'agence',
-      cat: (pending && pending.cat) || '',
-      price: (pending && pending.price) || 0,
-      days,
-      total: (pending && pending.total) || 0,
-      options: (pending && pending.options) || [],
-      name, email, phone: '',
-      pickup: searchCtx.city,
-      from, to,
-      notes,
-      status: 'wait',
-      created: new Date().toISOString().slice(0, 10),
-    };
+  /* Extras : changez librement le nom et le prix.
+     per : 'jour' = facturé par jour · 'forfait' = facturé une seule fois. */
+  const EXTRAS = [
+    { id: 'siege-bebe', name: 'Siège bébé (0 à 4 ans)', price: 5, per: 'jour' },
+    { id: 'rehausseur', name: 'Rehausseur enfant', price: 3, per: 'jour' },
+    { id: 'conducteur', name: 'Conducteur additionnel', price: 8, per: 'jour' },
+    { id: 'jeune', name: 'Jeune conducteur (moins de 25 ans)', price: 10, per: 'jour' },
+    { id: 'franchise', name: 'Franchise 0 €', price: 9, per: 'jour' },
+    { id: 'gps', name: 'GPS', price: 4, per: 'jour' },
+    { id: 'km', name: 'Kilométrage illimité', price: 15, per: 'jour' },
+    { id: 'plein', name: 'Retour sans faire le plein', price: 30, per: 'forfait' },
+    { id: 'lavage', name: 'Retour sans lavage', price: 20, per: 'forfait' },
+  ];
+
+  /* ---- dates et heures (toujours en heure locale) ---- */
+  const pad = n => String(n).padStart(2, '0');
+  const isoDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const todayISO = () => isoDay(new Date());
+  const addDaysISO = (iso, n) => { const d = new Date(iso + 'T12:00'); d.setDate(d.getDate() + n); return isoDay(d); };
+  const at = (date, time) => (date ? new Date(`${date}T${time || '10:00'}`) : null);
+  const fmtDT = d => d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+    + ` à ${pad(d.getHours())}h${pad(d.getMinutes())}`;
+  const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
+
+  /* créneaux de l'agence : 7h à 22h, toutes les 30 min */
+  const TIMES = [];
+  for (let m = 7 * 60; m <= 22 * 60; m += 30) TIMES.push(`${pad(Math.floor(m / 60))}:${pad(m % 60)}`);
+  $$('.time-sel').forEach(sel => {
+    sel.innerHTML = TIMES.map(t => `<option value="${t}"${t === '10:00' ? ' selected' : ''}>${t.replace(':', 'h')}</option>`).join('');
+  });
+
+  /* durée facturée : tranches de 24 h entamées (1 h de tolérance) */
+  function rentalDays(from, to) {
+    if (!from || !to || to <= from) return 0;
+    const hours = Math.round((to - from) / 3600000);
+    return Math.max(1, Math.ceil((hours - 1) / 24));
+  }
+
+  /* estimation : même calcul que le calculateur d'origine (prix/jour, −10 % dès 7 jours) + extras */
+  function estimate(v, days, ids) {
+    const base = v.price * days;
+    const discount = days >= 7 ? 0.10 : 0;
+    const extras = EXTRAS.filter(x => ids.includes(x.id))
+      .reduce((sum, x) => sum + x.price * (x.per === 'jour' ? days : 1), 0);
+    return { discount, extras, total: Math.round(base * (1 - discount) + extras) };
+  }
+  const extraNames = ids => EXTRAS.filter(x => ids.includes(x.id)).map(x => x.name);
+  const extrasHTML = name => EXTRAS.map(x =>
+    `<label><input type="checkbox" name="${name}" value="${x.id}"> <span>${esc(x.name)}</span> <em>+${x.price}&nbsp;€${x.per === 'jour' ? '/j' : ''}</em></label>`).join('');
+  const noCaution = v => v.specs.Caution === 'Sans caution';
+
+  const modal = $('#modal');
+  const book = $('#book');
+  let currentVehicle = null, lastFocus = null;
+  let pendingDays = 0;   // durée choisie dans la fiche, appliquée dès qu'une date de départ est saisie
+
+  /* ---- la demande est aussi gardée dans le navigateur (espace particulier / admin) ---- */
+  function saveReservation(entry) {
     try {
       const key = 'lnj_reservations';
       const list = JSON.parse(localStorage.getItem(key)) || [];
       list.unshift(entry);
       localStorage.setItem(key, JSON.stringify(list));
-    } catch (_) { /* stockage indisponible : la demande reste affichée à l'écran */ }
-    pending = null;
-    return entry;
+    } catch (_) { /* stockage indisponible : la demande part quand même par email */ }
   }
 
+  /* ---------- modale véhicule + calculateur ---------- */
   function openModal(id) {
     const v = FLEET.find(x => x.id === id);
     if (!v || !modal) return;
@@ -675,9 +714,10 @@
     $('#modalTitle').textContent = v.name;
     $('#modalSpecs').innerHTML = Object.entries(v.specs)
       .map(([k, val]) => `<tr><th>${k}</th><td>${val}</td></tr>`).join('');
-    const days = $('#calcDays');
-    days.value = clamp(searchDays || 3, 1, 30);
-    $$('#calcOpts input').forEach(i => (i.checked = false));
+    const b = book ? readBooking() : null;
+    $('#calcDays').value = clamp((b && b.days) || pendingDays || 3, 1, 30);
+    const chosen = b ? b.extras : [];
+    $$('#calcOpts input').forEach(i => (i.checked = chosen.includes(i.value)));
     updateCalc();
     modal.hidden = false;
     document.body.classList.add('no-scroll');
@@ -692,18 +732,16 @@
   function updateCalc() {
     if (!currentVehicle) return;
     const days = parseInt($('#calcDays').value, 10);
-    $('#calcDaysOut').textContent = days + (days > 1 ? ' jours' : ' jour');
-    const optsPerDay = $$('#calcOpts input:checked').reduce((s, i) => s + parseInt(i.value, 10), 0);
-    const base = currentVehicle.price * days;
-    const discount = days >= 7 ? 0.10 : 0;
-    const total = Math.round(base * (1 - discount) + optsPerDay * days);
+    $('#calcDaysOut').textContent = plural(days, 'jour');
+    const e = estimate(currentVehicle, days, $$('#calcOpts input:checked').map(i => i.value));
     $('#calcDetail').textContent =
       `${currentVehicle.price} € × ${days} j` +
-      (discount ? ' avec remise 10 %' : '') +
-      (optsPerDay ? ` + options ${optsPerDay} €/j` : '');
-    $('#calcTotal').textContent = EUR(total);
+      (e.discount ? ' avec remise 10 %' : '') +
+      (e.extras ? ` + extras ${e.extras} €` : '');
+    $('#calcTotal').textContent = EUR(e.total);
   }
   if (modal) {
+    $('#calcOpts').innerHTML = extrasHTML('m-extra');
     $('#modalClose').addEventListener('click', closeModal);
     $('#modalBackdrop').addEventListener('click', closeModal);
     window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -712,18 +750,227 @@
     $('#modalBook').addEventListener('click', () => {
       const v = currentVehicle;
       const days = parseInt($('#calcDays').value, 10);
-      const total = $('#calcTotal').textContent;
-      pending = {
-        car: v.name, cat: v.catLabel, price: v.price, days,
-        total: parseInt(total.replace(/[^0-9]/g, ''), 10) || v.price * days,
-        options: $$('#calcOpts input:checked').map(i => i.dataset.name),
-      };
+      if (book) {
+        $('#bk-car').value = v.id;
+        const ids = $$('#calcOpts input:checked').map(i => i.value);
+        $$('#bk-extras input').forEach(i => (i.checked = ids.includes(i.value)));
+        const from = $('#bk-from');
+        if (from.value) {
+          $('#bk-to').value = addDaysISO(from.value, days);
+          $('#bk-to-t').value = $('#bk-from-t').value;
+          pendingDays = 0;
+        } else {
+          pendingDays = days;
+        }
+        showBookingForm();
+        updateSummary();
+      }
       closeModal();
-      const msg = $('#cf-message');
-      if (msg) msg.value = `Je souhaite réserver : ${v.name}, ${days} jour(s), estimation ${total}.`;
       scrollToId('#reserver');
-      showToast(`<b>${v.name}</b> ajouté à votre demande — finalisez ci-dessous.`);
+      showToast(`<b>${esc(v.name)}</b> ajoutée à votre demande. Choisissez vos dates ci-dessous.`);
     });
+  }
+
+  /* ---------- formulaire de réservation ---------- */
+  function readBooking() {
+    const v = FLEET.find(x => x.id === $('#bk-car').value) || null;
+    const placeEl = $('input[name="place"]:checked', book);
+    const from = at($('#bk-from').value, $('#bk-from-t').value);
+    const to = at($('#bk-to').value, $('#bk-to-t').value);
+    return {
+      v,
+      place: placeEl ? placeEl.value : 'agence',
+      address: $('#bk-addr').value.trim(),
+      from, to,
+      days: rentalDays(from, to),
+      extras: $$('#bk-extras input:checked').map(i => i.value),
+    };
+  }
+  const placeLabel = b => (b.place === 'livraison'
+    ? `Livraison${b.address ? ' : ' + b.address : ' (adresse à indiquer)'}`
+    : AGENCY);
+
+  function updateSummary() {
+    if (!book) return;
+    const b = readBooking();
+    const names = extraNames(b.extras);
+    const rows = [
+      ['Véhicule', b.v ? `${b.v.name} · ${b.v.price} €/j${noCaution(b.v) ? ' · sans caution' : ''}` : 'À choisir'],
+      ['Départ', placeLabel(b)],
+      ['Période', b.from && b.to && b.days ? `${fmtDT(b.from)} → ${fmtDT(b.to)}` : 'À choisir'],
+      ['Durée', b.days ? plural(b.days, 'jour') : '—'],
+      ['Extras', names.length ? names.join(', ') : 'Aucun'],
+    ];
+    const e = b.v && b.days ? estimate(b.v, b.days, b.extras) : null;
+    $('#bk-summary').innerHTML = `
+      <dl>${rows.map(([k, val]) => `<dt>${k}</dt><dd>${esc(val)}</dd>`).join('')}</dl>
+      <div class="bk-total"><span>Estimation</span><b>${e ? EUR(e.total) : '—'}</b></div>
+      <p class="bk-note">Estimation indicative${b.place === 'livraison' ? ', hors frais de livraison' : ''}. Le tarif définitif est confirmé par l'agence.</p>`;
+  }
+
+  function showBookingForm() {
+    if (!book) return;
+    book.hidden = false;
+    $('#bk-done').hidden = true;
+  }
+
+  function showError(html) {
+    const box = $('#bk-error');
+    box.innerHTML = html;
+    box.hidden = !html;
+  }
+
+  if (book) {
+    const carSel = $('#bk-car');
+    const groups = [
+      ['Citadine premium', FLEET.filter(v => !noCaution(v))],
+      ['Citadine petit budget · sans caution', FLEET.filter(noCaution)],
+    ];
+    carSel.innerHTML = '<option value="">Choisissez un véhicule</option>' + groups.filter(g => g[1].length).map(([label, list]) =>
+      `<optgroup label="${label}">${list.map(v => `<option value="${v.id}">${esc(v.name)} · ${v.price} €/j</option>`).join('')}</optgroup>`).join('');
+    $('#bk-extras').innerHTML = extrasHTML('extra');
+
+    const fromD = $('#bk-from'), toD = $('#bk-to');
+    fromD.min = toD.min = todayISO();
+    fromD.addEventListener('change', () => {
+      if (!fromD.value) return;
+      toD.min = fromD.value;
+      if (pendingDays && !toD.value) {
+        toD.value = addDaysISO(fromD.value, pendingDays);
+        $('#bk-to-t').value = $('#bk-from-t').value;
+        pendingDays = 0;
+      } else if (toD.value && toD.value < fromD.value) {
+        toD.value = '';
+      }
+    });
+
+    const addrWrap = $('#bk-addr-wrap'), addr = $('#bk-addr');
+    const syncPlace = () => {
+      const delivery = readBooking().place === 'livraison';
+      addrWrap.hidden = !delivery;
+      addr.required = delivery;
+    };
+    $$('input[name="place"]', book).forEach(r => r.addEventListener('change', syncPlace));
+
+    const clearCustom = e => { if (e.target.setCustomValidity) e.target.setCustomValidity(''); };
+    book.addEventListener('input', e => { clearCustom(e); updateSummary(); });
+    book.addEventListener('change', e => { clearCustom(e); updateSummary(); });
+
+    function validate(b) {
+      const fields = $$('input, select, textarea', book);
+      fields.forEach(f => f.setCustomValidity && f.setCustomValidity(''));
+      if (!b.v) carSel.setCustomValidity('Choisissez un véhicule.');
+      if (b.place === 'livraison' && !b.address) addr.setCustomValidity('Indiquez l\'adresse de livraison.');
+      if (!fromD.value) fromD.setCustomValidity('Indiquez la date de départ.');
+      else if (b.from < new Date()) fromD.setCustomValidity('Ce départ est déjà passé : choisissez une date et une heure à venir.');
+      if (!toD.value) toD.setCustomValidity('Indiquez la date de retour.');
+      else if (b.from && b.to <= b.from) toD.setCustomValidity('Le retour doit être après le départ.');
+      const phone = $('#bk-phone');
+      const digits = phone.value.replace(/\D/g, '');
+      if (phone.value.trim() && (digits.length < 10 || digits.length > 15)) phone.setCustomValidity('Indiquez un numéro de téléphone valide.');
+      return fields.find(f => f.type !== 'hidden' && !f.classList.contains('bk-honey') && !f.checkValidity()) || null;
+    }
+
+    function mailtoLink(lines, subject) {
+      return `mailto:${BOOKING_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+    }
+
+    book.addEventListener('submit', async e => {
+      e.preventDefault();
+      showError('');
+      const b = readBooking();
+      const bad = validate(b);
+      if (bad) {
+        showError(esc(bad.validationMessage));
+        bad.focus();
+        bad.reportValidity();
+        return;
+      }
+      if ($('.bk-honey', book).value) return;   // robot
+
+      const ref = 'LNJ-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
+      const est = estimate(b.v, b.days, b.extras);
+      const names = extraNames(b.extras);
+      const first = $('#bk-first').value.trim(), last = $('#bk-last').value.trim();
+      const email = $('#bk-email').value.trim(), phone = $('#bk-phone').value.trim();
+      const notes = $('#bk-msg').value.trim();
+      const fields = {
+        'Référence': ref,
+        'Véhicule': `${b.v.name} (${b.v.price} €/j)`,
+        'Gamme': noCaution(b.v) ? 'Citadine petit budget · sans caution' : `Citadine premium · caution ${b.v.specs.Caution}`,
+        'Lieu de départ': b.place === 'livraison' ? 'Livraison' : AGENCY,
+        'Adresse de livraison': b.place === 'livraison' ? b.address : '—',
+        'Départ': fmtDT(b.from),
+        'Retour': fmtDT(b.to),
+        'Durée': plural(b.days, 'jour'),
+        'Extras': names.length ? names.join(', ') : 'Aucun',
+        'Estimation': `${EUR(est.total)} (indicatif)`,
+        'Prénom': first,
+        'Nom': last,
+        'email': email,
+        'Téléphone': phone,
+        'Message': notes || '—',
+      };
+      const subject = `Réservation ${ref} · ${b.v.name} · ${fmtDT(b.from)}`;
+      const send = $('#bk-send');
+      send.disabled = true;
+      send.textContent = 'Envoi en cours…';
+
+      let ok = false;
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 15000);
+        const res = await fetch(BOOKING_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ _subject: subject, _template: 'table', _captcha: 'false', ...fields }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(timer);
+        const data = await res.json().catch(() => ({}));
+        ok = res.ok && String(data.success) === 'true';
+      } catch (_) { ok = false; }
+
+      send.disabled = false;
+      send.textContent = 'Envoyer ma demande';
+
+      if (!ok) {
+        const lines = Object.entries(fields).map(([k, val]) => `${k === 'email' ? 'Email' : k} : ${val}`);
+        showError(`L'envoi automatique n'a pas abouti. Envoyez la même demande
+          <a href="${mailtoLink(lines, subject)}">par email en un clic</a>
+          ou appelez l'agence au <a href="tel:+33766697151">${PHONE}</a>.`);
+        return;
+      }
+
+      saveReservation({
+        id: ref, car: b.v.name, cat: b.v.catLabel, price: b.v.price, days: b.days, total: est.total,
+        options: names, name: `${first} ${last}`, email, phone,
+        pickup: b.place === 'livraison' ? `Livraison : ${b.address}` : AGENCY,
+        from: isoDay(b.from), fromTime: `${pad(b.from.getHours())}:${pad(b.from.getMinutes())}`,
+        to: isoDay(b.to), toTime: `${pad(b.to.getHours())}:${pad(b.to.getMinutes())}`,
+        notes, status: 'wait', created: todayISO(),
+      });
+      $('#bk-done-name').textContent = first;
+      $('#bk-ref').textContent = ref;
+      $('#bk-done-recap').textContent =
+        `${b.v.name} · ${fmtDT(b.from)} → ${fmtDT(b.to)} · ${b.place === 'livraison' ? 'livraison' : 'départ agence d\'Aubervilliers'}.`;
+      book.hidden = true;
+      const done = $('#bk-done');
+      done.hidden = false;
+      done.focus();
+    });
+
+    $('#bk-again').addEventListener('click', () => {
+      book.reset();
+      $$('.time-sel', book).forEach(s => (s.value = '10:00'));
+      syncPlace();
+      showError('');
+      showBookingForm();
+      updateSummary();
+    });
+
+    syncPlace();
+    updateSummary();
   }
 
   /* ======================================================================
@@ -740,34 +987,38 @@
   }
 
   /* ======================================================================
-     11. RECHERCHE — disponibilité
+     11. RECHERCHE — lieu, dates et heures : filtre la flotte et pré-remplit la réservation
   ====================================================================== */
   const search = $('#search');
   if (search) {
     const from = $('#s-from'), to = $('#s-to');
-    const today = new Date().toISOString().slice(0, 10);
-    from.min = today;
-    to.min = today;
-    from.addEventListener('change', () => { if (from.value) to.min = from.value; });
+    from.min = to.min = todayISO();
+    from.addEventListener('change', () => {
+      if (!from.value) return;
+      to.min = from.value;
+      if (to.value && to.value < from.value) to.value = '';
+    });
 
     search.addEventListener('submit', e => {
       e.preventDefault();
       const cat = $('#s-cat').value;
-      const city = $('#s-city').value;
-      if (from.value && to.value && to.value < from.value) {
-        showToast('La date de retour doit suivre la date de départ.');
-        return;
+      const place = $('#s-city').value;
+      const f = at(from.value, $('#s-from-t').value), t = at(to.value, $('#s-to-t').value);
+      if (f && f < new Date()) { showToast('Ce départ est déjà passé : choisissez une date et une heure à venir.'); return; }
+      if (f && t && t <= f) { showToast('Le retour doit être après le départ.'); return; }
+
+      if (book) {   // la recherche pré-remplit le formulaire de réservation
+        const radio = $(`input[name="place"][value="${place}"]`, book);
+        if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true })); }
+        if (from.value) { $('#bk-from').value = from.value; $('#bk-from-t').value = $('#s-from-t').value; $('#bk-to').min = from.value; }
+        if (to.value) { $('#bk-to').value = to.value; $('#bk-to-t').value = $('#s-to-t').value; }
+        updateSummary();
       }
-      if (from.value && to.value) {
-        searchDays = clamp(Math.max(1, Math.round((new Date(to.value) - new Date(from.value)) / 86400000)), 1, 30);
-      }
-      searchCtx = { city: $('#s-city').selectedOptions[0].textContent, from: from.value, to: to.value };
       applyFilter(cat);
       const n = FLEET.filter(v => cat === 'all' || v.cat === cat).length;
-      const period = from.value && to.value
-        ? ` du ${new Date(from.value).toLocaleDateString('fr-FR')} au ${new Date(to.value).toLocaleDateString('fr-FR')}`
-        : '';
-      showToast(`<b>${n} voiture${n > 1 ? 's' : ''}</b> disponible${n > 1 ? 's' : ''} à ${city}${period}.`);
+      const where = place === 'livraison' ? 'en livraison' : 'au départ de l\'agence d\'Aubervilliers';
+      const period = f && t ? ` du ${fmtDT(f)} au ${fmtDT(t)}` : '';
+      showToast(`<b>${plural(n, 'voiture')}</b> ${where}${period}. Choisissez la vôtre.`);
       scrollToId('#flotte');
     });
   }
@@ -921,40 +1172,6 @@
       scrollToId(id);
     });
   });
-
-  /* ======================================================================
-     18. FORMULAIRE CONVERSATIONNEL
-  ====================================================================== */
-  const chat = $('#chat');
-  if (chat) {
-    const steps = $$('.chat-step', chat);
-    const show = n => steps.forEach(s => s.classList.toggle('is-active', s.dataset.step === String(n)));
-    $$('.chat-go[data-next]', chat).forEach(btn => {
-      btn.addEventListener('click', () => {
-        const cur = btn.closest('.chat-step');
-        const inp = $('input, textarea', cur);
-        if (inp && !inp.checkValidity()) { inp.reportValidity(); return; }
-        const next = btn.dataset.next;
-        show(next);
-        const ni = $(`[data-step="${next}"] input, [data-step="${next}"] textarea`, chat);
-        if (ni) setTimeout(() => ni.focus(), 460);
-      });
-    });
-    chat.addEventListener('submit', e => {
-      e.preventDefault();
-      const msg = $('#cf-message');
-      if (msg && !msg.checkValidity()) { msg.reportValidity(); return; }
-      const name = $('#cf-name').value.trim() || 'vous';
-      const email = $('#cf-email').value.trim();
-      const entry = saveReservation(name, email, msg ? msg.value.trim() : '');
-      $('#cf-namecheck').textContent = name;
-      const ref = $('#cf-ref');
-      if (ref) ref.textContent = entry.id;
-      show(4);
-      /* La demande apparaît aussitôt dans l'espace admin (espace.html).
-         Hook : brancher ici un vrai endpoint (Formspree, EmailJS, fetch). */
-    });
-  }
 
   /* ======================================================================
      19. MINI-JEU — LE SLALOM

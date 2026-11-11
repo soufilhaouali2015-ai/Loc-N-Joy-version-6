@@ -42,6 +42,20 @@ pip install pillow numpy
 python3 scripts/process-photos.py
 ```
 
+## Réservations par email
+
+Le formulaire « Réserver » (véhicule, agence d'Aubervilliers ou livraison, dates et
+heures, extras, coordonnées) envoie chaque demande à **locnjoy75@gmail.com** via
+[FormSubmit](https://formsubmit.co), sans serveur à gérer.
+
+**À faire une seule fois** : à la toute première demande envoyée depuis le site en
+ligne, FormSubmit envoie à locnjoy75@gmail.com un email « Activate Form ». Cliquez sur
+le lien : les demandes suivantes arrivent directement. Tant que ce n'est pas fait, le
+client voit un bouton pour envoyer sa demande par email lui-même.
+
+Les extras et leurs prix se modifient dans la liste `EXTRAS` en haut de la section
+« 9. RÉSERVATION » de `js/main.js`.
+
 ## Espace et stockage des données
 
 `espace.html` sert à la fois le compte particulier et l'espace admin. Tout est

@@ -181,18 +181,25 @@
     <!-- Recherche / disponibilité -->
     <form class="search wrap" id="search" data-reveal autocomplete="off" aria-label="Rechercher un véhicule">
       <div class="search-field">
-        <label for="s-city">Ville de départ</label>
-        <select id="s-city" name="city">
-          <option value="Aubervilliers">Aubervilliers</option>
+        <label for="s-city">Lieu de départ</label>
+        <select id="s-city" name="place">
+          <option value="agence">Agence · Aubervilliers</option>
+          <option value="livraison">Livraison à votre adresse</option>
         </select>
       </div>
       <div class="search-field">
         <label for="s-from">Départ</label>
-        <input type="date" id="s-from" name="from">
+        <div class="dt">
+          <input type="date" id="s-from" name="from">
+          <select id="s-from-t" class="time-sel" aria-label="Heure de départ"></select>
+        </div>
       </div>
       <div class="search-field">
         <label for="s-to">Retour</label>
-        <input type="date" id="s-to" name="to">
+        <div class="dt">
+          <input type="date" id="s-to" name="to">
+          <select id="s-to-t" class="time-sel" aria-label="Heure de retour"></select>
+        </div>
       </div>
       <div class="search-field">
         <label for="s-cat">Catégorie</label>
@@ -479,33 +486,69 @@
       <span class="tag light" data-reveal><i></i>Réserver</span>
       <h2 class="footer-title" data-reveal data-scramble>La route vous attend.</h2>
 
-      <form class="chat" id="chat" autocomplete="off">
-        <div class="chat-step is-active" data-step="1">
-          <label for="cf-name">D'abord, quel est votre prénom&nbsp;?</label>
-          <div class="chat-row">
-            <input type="text" id="cf-name" name="name" placeholder="Votre prénom" required>
-            <button type="button" class="chat-go magnetic" data-next="2" data-magnetic aria-label="Étape suivante">→</button>
+      <form class="book" id="book" novalidate>
+        <fieldset class="bk-sec">
+          <legend><span>01</span>Véhicule, lieu et dates</legend>
+          <div class="bk-grid">
+            <div class="bk-field bk-wide">
+              <label for="bk-car">Véhicule</label>
+              <select id="bk-car" name="car" required><option value="">Choisissez un véhicule</option></select>
+            </div>
+            <div class="bk-field bk-wide">
+              <span class="bk-label" id="bk-place-l">Lieu de départ</span>
+              <div class="bk-choice" role="radiogroup" aria-labelledby="bk-place-l">
+                <label><input type="radio" name="place" value="agence" checked> <span><b>Agence</b> 42 Allée Albert Girard, Aubervilliers</span></label>
+                <label><input type="radio" name="place" value="livraison"> <span><b>Livraison</b> à l'adresse de votre choix</span></label>
+              </div>
+            </div>
+            <div class="bk-field bk-wide" id="bk-addr-wrap" hidden>
+              <label for="bk-addr">Adresse de livraison</label>
+              <input type="text" id="bk-addr" name="address" placeholder="N°, rue, code postal, ville" autocomplete="street-address">
+            </div>
+            <div class="bk-field">
+              <label for="bk-from">Départ</label>
+              <div class="dt">
+                <input type="date" id="bk-from" name="from" required>
+                <select id="bk-from-t" class="time-sel" aria-label="Heure de départ"></select>
+              </div>
+            </div>
+            <div class="bk-field">
+              <label for="bk-to">Retour</label>
+              <div class="dt">
+                <input type="date" id="bk-to" name="to" required>
+                <select id="bk-to-t" class="time-sel" aria-label="Heure de retour"></select>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="chat-step" data-step="2">
-          <label for="cf-email">Parfait. Votre email pour la confirmation&nbsp;?</label>
-          <div class="chat-row">
-            <input type="email" id="cf-email" name="email" placeholder="vous@exemple.com" required>
-            <button type="button" class="chat-go magnetic" data-next="3" data-magnetic aria-label="Étape suivante">→</button>
+        </fieldset>
+
+        <fieldset class="bk-sec">
+          <legend><span>02</span>Extras</legend>
+          <div class="bk-extras" id="bk-extras"><!-- extras : liste EXTRAS dans js/main.js --></div>
+        </fieldset>
+
+        <fieldset class="bk-sec">
+          <legend><span>03</span>Vos coordonnées</legend>
+          <div class="bk-grid">
+            <div class="bk-field"><label for="bk-first">Prénom</label><input type="text" id="bk-first" name="first" required autocomplete="given-name"></div>
+            <div class="bk-field"><label for="bk-last">Nom</label><input type="text" id="bk-last" name="last" required autocomplete="family-name"></div>
+            <div class="bk-field"><label for="bk-email">Email</label><input type="email" id="bk-email" name="email" required autocomplete="email" placeholder="vous@exemple.com"></div>
+            <div class="bk-field"><label for="bk-phone">Téléphone</label><input type="tel" id="bk-phone" name="phone" required autocomplete="tel" placeholder="06 12 34 56 78"></div>
+            <div class="bk-field bk-wide"><label for="bk-msg">Message <small>(facultatif)</small></label><textarea id="bk-msg" name="message" placeholder="Une précision pour l'agence ?"></textarea></div>
           </div>
-        </div>
-        <div class="chat-step" data-step="3">
-          <label for="cf-message">Racontez nous tout&nbsp;: voiture, dates, ville.</label>
-          <div class="chat-row">
-            <textarea id="cf-message" name="message" placeholder="Ex. : la Clio 6 Esprit Alpine du 12 au 15, départ Paris…" required></textarea>
-            <button type="submit" class="chat-go magnetic" data-magnetic>Envoyer</button>
-          </div>
-        </div>
-        <div class="chat-step chat-done" data-step="4">
-          <p>Reçu 5/5, <span id="cf-namecheck">vous</span>.<br>Votre demande porte la référence <b id="cf-ref" class="cf-ref">—</b>. Un agent Loc'N'Joy la confirme sous 2&nbsp;h ouvrées. Bonne route&nbsp;! ✦</p>
-          <p class="chat-done-sub">Suivez son avancement depuis votre <a href="espace.html">espace particulier</a>.</p>
-        </div>
+        </fieldset>
+        <input type="text" name="_honey" class="bk-honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <div class="bk-summary" id="bk-summary" aria-live="polite"></div>
+        <p class="bk-error" id="bk-error" role="alert" hidden></p>
+        <button type="submit" class="chat-go bk-send" id="bk-send">Envoyer ma demande</button>
       </form>
+
+      <div class="chat-done bk-done" id="bk-done" tabindex="-1" hidden>
+        <p>Reçu 5/5, <span id="bk-done-name">vous</span>.<br>Votre demande <b id="bk-ref" class="cf-ref">—</b> est bien partie à l'agence. Un agent Loc'N'Joy vous la confirme sous 2&nbsp;h ouvrées. Bonne route&nbsp;! ✦</p>
+        <p class="chat-done-sub" id="bk-done-recap"></p>
+        <p class="chat-done-sub">Suivez-la depuis votre <a href="espace.html">espace particulier</a>, ou <button type="button" class="bk-again" id="bk-again">faites une autre demande</button>.</p>
+      </div>
     </div>
 
     <div class="footer-bottom">
@@ -546,11 +589,7 @@
           <label for="calcDays">Durée&nbsp;: <b id="calcDaysOut">3 jours</b></label>
           <input type="range" id="calcDays" min="1" max="30" value="3" step="1">
         </div>
-        <div class="calc-opts" id="calcOpts">
-          <label><input type="checkbox" value="5" data-name="Siège enfant"> Siège enfant <em>+5&nbsp;€/j</em></label>
-          <label><input type="checkbox" value="8" data-name="Conducteur additionnel"> 2ᵉ conducteur <em>+8&nbsp;€/j</em></label>
-          <label><input type="checkbox" value="9" data-name="Franchise 0 €"> Franchise 0&nbsp;€ <em>+9&nbsp;€/j</em></label>
-        </div>
+        <div class="calc-opts" id="calcOpts" aria-label="Extras"><!-- extras : liste EXTRAS dans js/main.js --></div>
         <div class="calc-total">
           <span id="calcDetail"></span>
           <b id="calcTotal">0&nbsp;€</b>
