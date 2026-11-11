@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Location de voitures à Paris · Loc'N'Joy · Boîte automatique dès 60 €/jour</title>
+<meta name="description" content="Loc'N'Joy, agence de location de voitures à Paris : Clio 6 Esprit Alpine, Mercedes Classe A Pack AMG, Golf 8 R Line, Clio 5 E Tech, Mégane 4. Boîte automatique, assurance incluse, 200 km par jour, dès 60 €/jour.">
+<meta name="theme-color" content="#0B0F17">
+<meta property="og:title" content="Loc'N'Joy · Location de voitures à Paris, boîte automatique">
+<meta property="og:description" content="Prenez le volant. On s'occupe du reste. Dès 60 €/jour, 200 km par jour inclus.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0F17'/%3E%3Cpath d='M18 14v30h24v-8H28V14z' fill='%23FFA928'/%3E%3Ccircle cx='46' cy='46' r='4' fill='%23E8E4D8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AutoRental",
+  "name": "Loc'N'Joy",
+  "description": "Agence de location de voitures basée à Paris, disponible dans toute la France. Citadines et compactes en boîte automatique, 200 km par jour inclus.",
+  "url": "https://www.locnjoy.fr/",
+  "telephone": "+33 1 00 00 00 00",
+  "email": "bonjour@locnjoy.fr",
+  "priceRange": "60 € à 150 € par jour",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "42 rue de la Roquette",
+    "addressLocality": "Paris",
+    "postalCode": "75011",
+    "addressCountry": "FR"
+  },
+  "areaServed": "France",
+  "openingHours": "Mo-Su 07:00-22:00",
+  "makesOffer": [
+    { "@type": "Offer", "name": "Renault Clio 6 Esprit Alpine", "price": "120", "priceCurrency": "EUR" },
+    { "@type": "Offer", "name": "Mercedes Classe A Pack AMG", "price": "150", "priceCurrency": "EUR" },
+    { "@type": "Offer", "name": "Volkswagen Golf 8 R Line", "price": "130", "priceCurrency": "EUR" },
+    { "@type": "Offer", "name": "Renault Clio 5 E Tech", "price": "80", "priceCurrency": "EUR" },
+    { "@type": "Offer", "name": "Renault Mégane 4 Intense", "price": "60", "priceCurrency": "EUR" }
+  ]
+}
+</script>
+</head>
+<body>
+
+<!-- ============ LIGHT TRAIL (headlight particles follow the cursor) ============ -->
+<canvas id="trailCanvas" class="trail-canvas" aria-hidden="true"></canvas>
+
+<!-- ============ GRAIN / ASPHALT OVERLAY ============ -->
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============ LANE LINE (road marking drawn by scroll + car marker) ============ -->
+<div class="lane" aria-hidden="true">
+  <i id="laneDash"></i>
+  <svg id="laneCar" viewBox="0 0 24 44" aria-hidden="true">
+    <rect x="4" y="4" width="16" height="36" rx="7" fill="currentColor"/>
+    <rect x="6.5" y="12" width="11" height="8" rx="2.5" fill="#0B0F17" opacity=".55"/>
+    <rect x="6.5" y="27" width="11" height="6" rx="2" fill="#0B0F17" opacity=".35"/>
+  </svg>
+</div>
+
+<!-- ============ EASTER EGG — type "vroom" ============ -->
+<div class="vroom" id="vroom" aria-hidden="true">
+  <div class="vroom-flash"></div>
+  <span class="vroom-word">VROOM<i>&nbsp;!</i></span>
+  <svg class="vroom-car" viewBox="0 0 120 40" aria-hidden="true">
+    <path d="M6 30 Q8 18 24 16 L38 8 Q40 6 44 6 L70 6 Q76 6 80 10 L90 16 Q112 18 114 28 L114 30 Q114 33 110 33 L10 33 Q6 33 6 30 Z" fill="currentColor"/>
+    <circle cx="32" cy="33" r="6.5" fill="#0B0F17" stroke="currentColor" stroke-width="3"/>
+    <circle cx="90" cy="33" r="6.5" fill="#0B0F17" stroke="currentColor" stroke-width="3"/>
+  </svg>
+</div>
+
+<!-- ============ LOADER — speedometer check ============ -->
+<div class="loader" id="loader">
+  <div class="loader-stage">
+    <svg class="loader-gauge" viewBox="0 0 220 130" aria-hidden="true">
+      <path class="gauge-arc" d="M20 120 A 90 90 0 0 1 200 120" />
+      <path class="gauge-fill" id="gaugeFill" d="M20 120 A 90 90 0 0 1 200 120" />
+      <g class="gauge-ticks" id="gaugeTicks"></g>
+      <line class="gauge-needle" id="gaugeNeedle" x1="110" y1="120" x2="30" y2="118" />
+      <circle class="gauge-hub" cx="110" cy="120" r="8" />
+    </svg>
+    <div class="loader-meta">
+      <span class="loader-check" id="loaderCheck">Contrôle des niveaux</span>
+      <span class="loader-count"><b id="loaderCount">0</b><small> km/h</small></span>
+    </div>
+    <div class="loader-bar"><i id="loaderFill"></i></div>
+  </div>
+  <div class="loader-reveal" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header class="header" id="header">
+  <a href="#top" class="brand" aria-label="Loc'N'Joy, retour en haut">
+    <img class="brand-file" src="images/logo.png" alt="Loc'N'Joy" hidden>
+    <span class="brand-mark">
+      <svg viewBox="0 0 120 44" aria-hidden="true">
+        <path d="M8 32 Q10 20 26 18 L40 9 Q42 7 46 7 L72 7 Q78 7 82 11 L92 18 Q112 20 114 30 L114 32 Q114 35 110 35 L12 35 Q8 35 8 32 Z" fill="currentColor"/>
+        <path d="M44 11 L68 11 Q73 11 76 14 L83 19 L44 19 Z" fill="#0B0F17" opacity=".35"/>
+        <circle cx="32" cy="35" r="7" fill="#0B0F17"/><circle cx="32" cy="35" r="3.4" fill="currentColor"/>
+        <circle cx="92" cy="35" r="7" fill="#0B0F17"/><circle cx="92" cy="35" r="3.4" fill="currentColor"/>
+      </svg>
+    </span>
+    <span class="brand-text">Loc<span class="brand-n">'N'</span>Joy</span>
+  </a>
+  <nav class="nav" aria-label="Navigation principale">
+    <a href="#flotte" class="nav-link"><span>La flotte</span></a>
+    <a href="#etapes" class="nav-link"><span>Comment ça marche</span></a>
+    <a href="#agences" class="nav-link"><span>L'agence</span></a>
+    <a href="#slalom" class="nav-link"><span>Le Slalom</span></a>
+    <a href="#reserver" class="nav-link nav-cta"><span>Réserver</span></a>
+  </nav>
+  <div class="header-right">
+    <span class="road-clock" aria-hidden="true"><i></i>Paris · <b id="clock">00:00:00</b></span>
+    <a href="espace.html" class="portal-link" aria-label="Espace client et admin">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      <span>Espace</span>
+    </a>
+  </div>
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+</header>
+
+<!-- ============ MOBILE MENU ============ -->
+<div class="menu" id="menu">
+  <div class="menu-inner">
+    <a href="#flotte">La flotte</a>
+    <a href="#etapes">Comment ça marche</a>
+    <a href="#agences">L'agence</a>
+    <a href="#slalom">Le Slalom</a>
+    <a href="#reserver">Réserver</a>
+    <a href="espace.html">Espace</a>
+  </div>
+</div>
+
+<!-- ============ SMOOTH SCROLL CONTENT ============ -->
+<div id="scroll" class="scroll">
+<main id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="hero">
+    <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
+    <div class="hero-vignette" aria-hidden="true"></div>
+
+    <span class="sticker st-1" data-parallax="0.14" aria-hidden="true">200 km<br>par jour</span>
+    <span class="sticker st-2" data-parallax="-0.09" aria-hidden="true">Dès 60&nbsp;€<br>/ jour</span>
+
+    <div class="hero-content wrap">
+      <p class="hero-kicker" data-reveal>
+        <span class="kicker-dot"></span> Agence de location de voitures basée à Paris, disponible dans toute la France
+      </p>
+      <h1 class="hero-title">
+        <span class="line"><span data-char-line>Prenez le volant.</span></span>
+        <span class="line accent"><span data-char-line>On s'occupe du reste.</span></span>
+      </h1>
+      <div class="hero-bottom">
+        <p class="hero-sub" data-reveal>
+          Des citadines et compactes récentes, toutes en boîte automatique.
+          Réservation en 2&nbsp;minutes, assurance incluse, 200&nbsp;km par jour
+          et assistance 24/7 sur toute la route.
+        </p>
+        <a href="#flotte" class="magnetic btn" data-magnetic>
+          <span class="btn-fill"></span>
+          <span class="btn-label"><span>Voir la flotte</span><span aria-hidden="true">Voir la flotte</span></span>
+          <svg class="btn-arrow" viewBox="0 0 24 24"><path d="M5 19L19 5M19 5H9M19 5V15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recherche / disponibilité -->
+    <form class="search wrap" id="search" data-reveal autocomplete="off" aria-label="Rechercher un véhicule">
+      <div class="search-field">
+        <label for="s-city">Ville de départ</label>
+        <select id="s-city" name="city">
+          <option value="Paris">Paris 11ᵉ</option>
+        </select>
+      </div>
+      <div class="search-field">
+        <label for="s-from">Départ</label>
+        <input type="date" id="s-from" name="from">
+      </div>
+      <div class="search-field">
+        <label for="s-to">Retour</label>
+        <input type="date" id="s-to" name="to">
+      </div>
+      <div class="search-field">
+        <label for="s-cat">Catégorie</label>
+        <select id="s-cat" name="cat">
+          <option value="all">Toutes</option>
+          <option value="citadine">Citadine</option>
+        </select>
+      </div>
+      <button type="submit" class="search-go magnetic" data-magnetic>
+        <span>Rechercher</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L19 5M19 5H9M19 5V15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </form>
+
+    <div class="hero-scroll"><span>Descendez</span><i></i></div>
+  </section>
+
+  <!-- ============ HAZARD MARQUEE ============ -->
+  <section class="marquee" aria-hidden="true">
+    <div class="hazard hazard-top"></div>
+    <div class="marquee-track" id="marqueeTrack">
+      <span>Citadines</span><span class="star">✦</span>
+      <span>Sportives</span><span class="star">✦</span>
+      <span>Utilitaires</span><span class="star">✦</span>
+      <span>200 km par jour</span><span class="star">✦</span>
+      <span>Assistance 24/7</span><span class="star">✦</span>
+      <span>Annulation gratuite</span><span class="star">✦</span>
+    </div>
+    <div class="hazard hazard-bottom"></div>
+  </section>
+
+  <!-- ============ MANIFESTO + STATS ============ -->
+  <section class="manifesto" id="manifesto">
+    <svg class="road-draw" viewBox="0 0 300 120" data-draw aria-hidden="true">
+      <path d="M10 100 C 70 100 80 30 150 30 C 220 30 230 95 290 60" fill="none"/>
+    </svg>
+    <div class="wrap">
+      <span class="tag" data-reveal><i></i>La promesse</span>
+      <h2 class="manifesto-text" data-words>
+        Louer une voiture ne devrait jamais ressembler à une épreuve.
+        Chez Loc'N'Joy, chaque trajet commence par une promesse simple :
+        une voiture impeccable, un prix sans surprise, des clés remises
+        en cinq minutes. La route, la musique, l'horizon : tout le reste
+        vous appartient.
+      </h2>
+      <div class="stats">
+        <div class="stat" data-reveal><b data-count="5">0</b><span>Voitures en flotte</span></div>
+        <div class="stat" data-reveal><b data-count="1">0</b><span>Agence en France</span></div>
+        <div class="stat" data-reveal><b data-count="500" data-suffix="+">0</b><span>Conducteurs conquis</span></div>
+        <div class="stat" data-reveal><b data-count="100" data-suffix="&thinsp;%">0</b><span>Boîte automatique</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LA FLOTTE ============ -->
+  <section class="fleet" id="flotte">
+    <span class="sticker st-3" data-parallax="0.1" aria-hidden="true">Révisées<br>&amp; garanties</span>
+    <div class="wrap">
+      <span class="tag" data-reveal><i></i>La flotte</span>
+      <h2 class="section-title" data-reveal data-scramble>Des jolies voitures prêtes à partir</h2>
+      <p class="section-sub" data-reveal>
+        Chaque voiture est révisée avant chaque location, avec une fiche
+        technique complète comme chez un constructeur. Et chez Loc'N'Joy,
+        tout roule en boîte automatique : le pied gauche peut se reposer.
+      </p>
+      <div class="filters" id="filters" role="tablist" aria-label="Filtrer la flotte">
+        <button class="chip is-on" data-cat="all" role="tab" aria-selected="true">Toutes</button>
+        <button class="chip" data-cat="citadine" role="tab" aria-selected="false">Citadines</button>
+      </div>
+    </div>
+    <div class="fleet-grid wrap" id="fleetGrid"><!-- cartes générées par js/main.js --></div>
+    <p class="fleet-empty" id="fleetEmpty" hidden>Aucun véhicule dans cette catégorie pour le moment.</p>
+  </section>
+
+  <!-- ============ ROAD BANNER ============ -->
+  <section class="roadband" aria-hidden="true">
+    <div class="roadband-media" data-parallax-bg>
+      <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1800&q=70&auto=format&fit=crop" alt="" loading="lazy" data-fallback="road">
+    </div>
+    <p class="roadband-line">200 km d'horizon par jour, compris dans le prix.</p>
+  </section>
+
+  <!-- ============ COMMENT ÇA MARCHE ============ -->
+  <section class="steps" id="etapes">
+    <div class="torn torn-top" aria-hidden="true"></div>
+    <div class="wrap">
+      <span class="tag light" data-reveal><i></i>L'itinéraire</span>
+      <h2 class="section-title light" data-reveal data-scramble>De la réservation aux clés</h2>
+    </div>
+    <div class="acc wrap" id="acc">
+      <article class="acc-row open">
+        <button class="acc-head" aria-expanded="true"><span class="acc-num">01</span><h3>Choisissez</h3><span class="acc-plus"></span></button>
+        <div class="acc-body"><p>Comparez les cinq voitures, leurs fiches techniques et les tarifs dégressifs. Chaque fiche affiche les vraies specs&nbsp;: puissance, coffre, consommation, équipements.</p></div>
+      </article>
+      <article class="acc-row">
+        <button class="acc-head" aria-expanded="false"><span class="acc-num">02</span><h3>Réservez</h3><span class="acc-plus"></span></button>
+        <div class="acc-body"><p>Dates, options, estimation instantanée. Confirmation immédiate par email et annulation gratuite jusqu'à 48&nbsp;h avant le départ, sans justificatif.</p></div>
+      </article>
+      <article class="acc-row">
+        <button class="acc-head" aria-expanded="false"><span class="acc-num">03</span><h3>Roulez</h3><span class="acc-plus"></span></button>
+        <div class="acc-body"><p>Retrait à l'agence en 5&nbsp;minutes chrono&nbsp;: état des lieux numérique et 200&nbsp;km inclus par jour. L'assistance répond 24/7, partout en France.</p></div>
+      </article>
+      <article class="acc-row">
+        <button class="acc-head" aria-expanded="false"><span class="acc-num">04</span><h3>Restituez</h3><span class="acc-plus"></span></button>
+        <div class="acc-body"><p>Rapportez les clés à l'agence, on s'occupe du reste. Caution libérée sous 48&nbsp;h, facture envoyée par email.</p></div>
+      </article>
+    </div>
+
+    <div class="pledges wrap">
+      <div class="pledge" data-reveal>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h3>Assurance tous risques</h3><p>Incluse dans chaque tarif, franchise réductible à 0&nbsp;€.</p>
+      </div>
+      <div class="pledge" data-reveal>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <h3>Assistance 24/7</h3><p>Un humain au bout du fil, dépannage sous 45&nbsp;min en ville.</p>
+      </div>
+      <div class="pledge" data-reveal>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M15 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h3>200 km par jour</h3><p>Inclus dans chaque journée de location, cumulables sur tout le séjour.</p>
+      </div>
+      <div class="pledge" data-reveal>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <h3>Annulation gratuite</h3><p>Jusqu'à 48&nbsp;h avant le départ, remboursement intégral.</p>
+      </div>
+      <div class="pledge" data-reveal>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l2-7h12l2 7M6 17h12M7 20h2M15 20h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="17" r="1.4" fill="currentColor"/><circle cx="16" cy="17" r="1.4" fill="currentColor"/></svg>
+        <h3>Boîte automatique</h3><p>Sur toutes nos voitures. Le pied gauche se repose, la ville devient facile.</p>
+      </div>
+      <div class="pledge" data-reveal>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M7 8h7a3 3 0 1 1 0 6H8a3 3 0 1 0 0 6h9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <h3>Prix garantis</h3><p>Zéro frais caché. Le prix affiché est le prix débité.</p>
+      </div>
+    </div>
+    <div class="torn torn-bottom" aria-hidden="true"></div>
+  </section>
+
+  <!-- ============ AVIS ============ -->
+  <section class="reviews" id="avis">
+    <div class="wrap">
+      <span class="tag" data-reveal><i></i>Carnet de route</span>
+      <h2 class="section-title" data-reveal data-scramble>Ils ont pris la route</h2>
+    </div>
+    <div class="reviews-stage wrap" data-reveal>
+      <blockquote class="review is-active">
+        <p>«&nbsp;Clés en main en 4 minutes montre en main. La Clio 6 était impeccable et la boîte auto change tout dans Paris. Je n'avais jamais vu une location aussi simple.&nbsp;»</p>
+        <footer><b>Camille R.</b><span>Clio 6 Esprit Alpine · Paris</span><em>★★★★★</em></footer>
+      </blockquote>
+      <blockquote class="review">
+        <p>«&nbsp;Réservée la veille au soir pour un aller et retour à Lille le lendemain matin. Simple, rapide, zéro surprise sur le prix.&nbsp;»</p>
+        <footer><b>Yassine B.</b><span>Mégane 4 Intense · Paris → Lille</span><em>★★★★★</em></footer>
+      </blockquote>
+      <blockquote class="review">
+        <p>«&nbsp;La Golf 8 pour une escapade en Normandie. Voiture nickel, fiche technique exacte, caution rendue en 24&nbsp;h. On refera ça.&nbsp;»</p>
+        <footer><b>Élise &amp; Marc</b><span>Golf 8 R Line · Deauville</span><em>★★★★★</em></footer>
+      </blockquote>
+      <blockquote class="review">
+        <p>«&nbsp;La Classe A pour un mariage. Présentation impeccable, prise en main immédiate, et l'équipe m'a même conseillé l'itinéraire. Service vraiment humain.&nbsp;»</p>
+        <footer><b>Théo L.</b><span>Classe A Pack AMG · Paris</span><em>★★★★★</em></footer>
+      </blockquote>
+      <div class="reviews-nav" role="tablist" aria-label="Choisir un avis">
+        <button class="rdot is-on" aria-label="Avis 1" role="tab" aria-selected="true"></button>
+        <button class="rdot" aria-label="Avis 2" role="tab" aria-selected="false"></button>
+        <button class="rdot" aria-label="Avis 3" role="tab" aria-selected="false"></button>
+        <button class="rdot" aria-label="Avis 4" role="tab" aria-selected="false"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MINI-JEU — LE SLALOM ============ -->
+  <section class="game" id="slalom">
+    <div class="torn torn-top" aria-hidden="true"></div>
+    <div class="wrap">
+      <span class="tag light" data-reveal><i></i>Le Slalom</span>
+      <h2 class="section-title light" data-reveal data-scramble>Gagnez 10% de remise en 800 mètres</h2>
+      <p class="game-hint" data-reveal>
+        Évitez les cônes. Flèches ◀ ▶ ou Q / D au clavier, swipe sur mobile.
+        Tenez 800&nbsp;m&nbsp;: un code promo de 10&nbsp;% vous attend à l'arrivée.
+      </p>
+
+      <div class="game-board" data-reveal>
+        <div class="game-hud">
+          <span class="hud-item">📍 <b id="gameDist">0</b> m</span>
+          <span class="hud-item">🏁 Record <b id="gameBest">0</b> m</span>
+          <button type="button" class="hud-reset" id="gameReset">↻ Recommencer</button>
+        </div>
+        <div class="slalom-frame">
+          <canvas id="slalomCanvas" class="slalom-canvas" tabindex="0" aria-label="Mini-jeu Le Slalom : évitez les cônes avec les flèches du clavier."></canvas>
+          <div class="slalom-over" id="slalomStart">
+            <span class="slalom-over-kicker">Prêt&nbsp;?</span>
+            <span class="slalom-over-title">LE SLALOM</span>
+            <button type="button" class="btn slalom-btn" id="slalomGo">
+              <span class="btn-fill"></span>
+              <span class="btn-label"><span>Démarrer</span><span aria-hidden="true">Démarrer</span></span>
+            </button>
+          </div>
+          <div class="slalom-over" id="slalomWin" hidden>
+            <span class="slalom-over-kicker">800 m sans une rayure.</span>
+            <span class="slalom-over-title">GAGNÉ<i class="brand-dot">.</i></span>
+            <span class="slalom-over-sub">Votre code&nbsp;: <b class="promo" id="promoCode">LOCNJOY10</b></span>
+            <button type="button" class="btn slalom-btn" id="promoCopy">
+              <span class="btn-fill"></span>
+              <span class="btn-label"><span>Copier le code</span><span aria-hidden="true">Copier le code</span></span>
+            </button>
+          </div>
+          <div class="slalom-over" id="slalomLose" hidden>
+            <span class="slalom-over-kicker">Aïe, un cône.</span>
+            <span class="slalom-over-title">CRASH</span>
+            <span class="slalom-over-sub"><b id="loseDist">0</b> m parcourus</span>
+            <button type="button" class="btn slalom-btn" id="slalomRetry">
+              <span class="btn-fill"></span>
+              <span class="btn-label"><span>Rejouer</span><span aria-hidden="true">Rejouer</span></span>
+            </button>
+          </div>
+        </div>
+        <div class="game-pad" id="gamePad" aria-hidden="true">
+          <button data-dir="left">◀</button><button data-dir="right">▶</button>
+        </div>
+      </div>
+    </div>
+    <div class="torn torn-bottom" aria-hidden="true"></div>
+  </section>
+
+  <!-- ============ AGENCES ============ -->
+  <section class="agencies" id="agences">
+    <div class="wrap">
+      <span class="tag" data-reveal><i></i>L'agence</span>
+      <h2 class="section-title" data-reveal data-scramble>Une agence à Paris, la France entière devant vous</h2>
+      <p class="section-sub" data-reveal>
+        Retrait et retour au même endroit, à moins de 10&nbsp;minutes de la
+        gare de Lyon. Avec 200&nbsp;km inclus par jour, toute la France reste
+        à portée de route.
+      </p>
+    </div>
+    <div class="agency-grid wrap">
+      <div class="agency" data-reveal><b>Paris 11ᵉ</b><span>42 rue de la Roquette</span><span>Du lundi au dimanche · 7h à 22h</span><a href="tel:+33100000001">01 00 00 00 01</a></div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <span class="tag" data-reveal><i></i>FAQ</span>
+      <h2 class="section-title" data-reveal data-scramble>Avant de démarrer</h2>
+      <div class="acc acc-light" id="faqAcc">
+        <article class="acc-row">
+          <button class="acc-head" aria-expanded="false"><span class="acc-num">Q1</span><h3>Quels documents prévoir&nbsp;?</h3><span class="acc-plus"></span></button>
+          <div class="acc-body"><p>Un permis de conduire valide, une pièce d'identité et une carte bancaire au nom du conducteur. Rien de plus.</p></div>
+        </article>
+        <article class="acc-row">
+          <button class="acc-head" aria-expanded="false"><span class="acc-num">Q2</span><h3>Comment fonctionne la caution&nbsp;?</h3><span class="acc-plus"></span></button>
+          <div class="acc-body"><p>Une empreinte bancaire, jamais débitée sauf sinistre responsable. Elle est libérée automatiquement sous 48&nbsp;h après la restitution.</p></div>
+        </article>
+        <article class="acc-row">
+          <button class="acc-head" aria-expanded="false"><span class="acc-num">Q3</span><h3>Comment fonctionne le kilométrage&nbsp;?</h3><span class="acc-plus"></span></button>
+          <div class="acc-body"><p>Chaque journée de location inclut 200&nbsp;km, cumulables sur toute la durée. Ensuite, chaque kilomètre supplémentaire est facturé au tarif indiqué sur votre contrat, sans surprise.</p></div>
+        </article>
+        <article class="acc-row">
+          <button class="acc-head" aria-expanded="false"><span class="acc-num">Q4</span><h3>Et pour annuler ou modifier&nbsp;?</h3><span class="acc-plus"></span></button>
+          <div class="acc-body"><p>Annulation gratuite jusqu'à 48&nbsp;h avant le départ. Modification de dates ou de véhicule à tout moment, selon disponibilité, sans frais de dossier.</p></div>
+        </article>
+        <article class="acc-row">
+          <button class="acc-head" aria-expanded="false"><span class="acc-num">Q5</span><h3>Quel âge minimum pour louer&nbsp;?</h3><span class="acc-plus"></span></button>
+          <div class="acc-body"><p>21&nbsp;ans et 1&nbsp;an de permis minimum. Une participation jeune conducteur peut s'appliquer avant 25&nbsp;ans, toujours affichée avant le paiement.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RÉSERVATION / FOOTER ============ -->
+  <footer class="footer" id="reserver">
+    <div class="hazard hazard-top" aria-hidden="true"></div>
+    <svg class="footer-shapes" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <circle class="sh sh-1" cx="120" cy="120" r="90"></circle>
+      <path class="sh sh-2" d="M950 40 h180 v70 h-180 Z"></path>
+      <rect class="sh sh-3" x="1010" y="390" width="140" height="140" rx="70"></rect>
+      <path class="sh sh-4" d="M60 480 L180 480 L120 560 Z"></path>
+      <path class="sh sh-5" d="M480 40 q60 60 120 0 q60 -60 120 0" fill="none"></path>
+      <text class="sh sh-6" x="600" y="560">✦ LOC'N'JOY ✦</text>
+    </svg>
+
+    <div class="footer-top">
+      <span class="tag light" data-reveal><i></i>Réserver</span>
+      <h2 class="footer-title" data-reveal data-scramble>La route vous attend.</h2>
+
+      <form class="chat" id="chat" autocomplete="off">
+        <div class="chat-step is-active" data-step="1">
+          <label for="cf-name">D'abord, quel est votre prénom&nbsp;?</label>
+          <div class="chat-row">
+            <input type="text" id="cf-name" name="name" placeholder="Votre prénom" required>
+            <button type="button" class="chat-go magnetic" data-next="2" data-magnetic aria-label="Étape suivante">→</button>
+          </div>
+        </div>
+        <div class="chat-step" data-step="2">
+          <label for="cf-email">Parfait. Votre email pour la confirmation&nbsp;?</label>
+          <div class="chat-row">
+            <input type="email" id="cf-email" name="email" placeholder="vous@exemple.com" required>
+            <button type="button" class="chat-go magnetic" data-next="3" data-magnetic aria-label="Étape suivante">→</button>
+          </div>
+        </div>
+        <div class="chat-step" data-step="3">
+          <label for="cf-message">Racontez nous tout&nbsp;: voiture, dates, ville.</label>
+          <div class="chat-row">
+            <textarea id="cf-message" name="message" placeholder="Ex. : la Clio 6 Esprit Alpine du 12 au 15, départ Paris…" required></textarea>
+            <button type="submit" class="chat-go magnetic" data-magnetic>Envoyer</button>
+          </div>
+        </div>
+        <div class="chat-step chat-done" data-step="4">
+          <p>Reçu 5/5, <span id="cf-namecheck">vous</span>.<br>Votre demande porte la référence <b id="cf-ref" class="cf-ref">—</b>. Un agent Loc'N'Joy la confirme sous 2&nbsp;h ouvrées. Bonne route&nbsp;! ✦</p>
+          <p class="chat-done-sub">Suivez son avancement depuis votre <a href="espace.html">espace particulier</a>.</p>
+        </div>
+      </form>
+    </div>
+
+    <div class="footer-bottom">
+      <a href="#top" class="footer-logo">Loc<span class="brand-n">'N'</span>Joy<span class="brand-dot">.</span></a>
+      <div class="footer-col">
+        <span class="footer-col-h">Écrire</span>
+        <a href="mailto:bonjour@locnjoy.fr">bonjour@locnjoy.fr</a>
+        <a href="tel:+33100000000">+33 1 00 00 00 00</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-h">Espace</span>
+        <a href="espace.html">Compte particulier</a>
+        <a href="espace.html">Espace admin</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-h">Suivre</span>
+        <a href="#">Instagram</a>
+        <a href="#">LinkedIn</a>
+        <a href="#">YouTube</a>
+      </div>
+      <p class="footer-copy">© <span id="year"></span> Loc'N'Joy · Élaboré au bord de la route. Tapez «&nbsp;vroom&nbsp;» pour voir.</p>
+    </div>
+  </footer>
+
+</main>
+</div>
+
+<!-- ============ MODALE VÉHICULE ============ -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal-card" id="modalCard">
+    <button class="modal-close" id="modalClose" aria-label="Fermer">✕</button>
+    <div class="modal-media" id="modalMedia"></div>
+    <div class="modal-body">
+      <span class="modal-cat" id="modalCat"></span>
+      <h3 class="modal-title" id="modalTitle"></h3>
+      <table class="spec-table" id="modalSpecs" aria-label="Fiche technique"></table>
+      <div class="calc">
+        <div class="calc-row">
+          <label for="calcDays">Durée&nbsp;: <b id="calcDaysOut">3 jours</b></label>
+          <input type="range" id="calcDays" min="1" max="30" value="3" step="1">
+        </div>
+        <div class="calc-opts" id="calcOpts">
+          <label><input type="checkbox" value="5" data-name="Siège enfant"> Siège enfant <em>+5&nbsp;€/j</em></label>
+          <label><input type="checkbox" value="8" data-name="Conducteur additionnel"> 2ᵉ conducteur <em>+8&nbsp;€/j</em></label>
+          <label><input type="checkbox" value="9" data-name="Franchise 0 €"> Franchise 0&nbsp;€ <em>+9&nbsp;€/j</em></label>
+        </div>
+        <div class="calc-total">
+          <span id="calcDetail"></span>
+          <b id="calcTotal">0&nbsp;€</b>
+        </div>
+      </div>
+      <button class="btn modal-book" id="modalBook">
+        <span class="btn-fill"></span>
+        <span class="btn-label"><span>Réserver ce véhicule</span><span aria-hidden="true">Réserver ce véhicule</span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/main.js" defer></script>
+</body>
+</html>

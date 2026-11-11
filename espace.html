@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Espace Loc'N'Joy · Compte particulier et espace admin</title>
+<meta name="description" content="Portail Loc'N'Joy : suivez vos réservations depuis votre compte particulier, ou gérez les demandes depuis l'espace admin.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B0F17">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0F17'/%3E%3Cpath d='M18 14v30h24v-8H28V14z' fill='%23FFA928'/%3E%3Ccircle cx='46' cy='46' r='4' fill='%23E8E4D8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/espace.css">
+</head>
+<body class="page-espace">
+
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============ HEADER ============ -->
+<header class="header" id="header">
+  <a href="index.html" class="brand" aria-label="Loc'N'Joy, retour à l'accueil">
+    <img class="brand-file" src="images/logo.png" alt="Loc'N'Joy" hidden>
+    <span class="brand-mark">
+      <svg viewBox="0 0 120 44" aria-hidden="true">
+        <path d="M8 32 Q10 20 26 18 L40 9 Q42 7 46 7 L72 7 Q78 7 82 11 L92 18 Q112 20 114 30 L114 32 Q114 35 110 35 L12 35 Q8 35 8 32 Z" fill="currentColor"/>
+        <path d="M44 11 L68 11 Q73 11 76 14 L83 19 L44 19 Z" fill="#0B0F17" opacity=".35"/>
+        <circle cx="32" cy="35" r="7" fill="#0B0F17"/><circle cx="32" cy="35" r="3.4" fill="currentColor"/>
+        <circle cx="92" cy="35" r="7" fill="#0B0F17"/><circle cx="92" cy="35" r="3.4" fill="currentColor"/>
+      </svg>
+    </span>
+    <span class="brand-text">Loc<span class="brand-n">'N'</span>Joy</span>
+  </a>
+  <nav class="nav" aria-label="Navigation principale">
+    <a href="index.html#flotte" class="nav-link"><span>La flotte</span></a>
+    <a href="index.html#etapes" class="nav-link"><span>Comment ça marche</span></a>
+    <a href="index.html#agences" class="nav-link"><span>L'agence</span></a>
+    <a href="index.html#reserver" class="nav-link nav-cta"><span>Réserver</span></a>
+  </nav>
+  <div class="header-right">
+    <span class="road-clock" aria-hidden="true"><i></i>Paris · <b id="clock">00:00:00</b></span>
+    <a href="espace.html" class="portal-link is-on" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      <span>Espace</span>
+    </a>
+  </div>
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+</header>
+
+<div class="menu" id="menu">
+  <div class="menu-inner">
+    <a href="index.html#flotte">La flotte</a>
+    <a href="index.html#etapes">Comment ça marche</a>
+    <a href="index.html#agences">L'agence</a>
+    <a href="index.html#reserver">Réserver</a>
+    <a href="espace.html">Espace</a>
+  </div>
+</div>
+
+<main class="espace">
+
+  <!-- ============ 1. PORTAIL : choix de l'espace ============ -->
+  <section class="view" id="view-portal">
+    <div class="wrap espace-wrap">
+      <span class="tag light"><i></i>Portail</span>
+      <h1 class="espace-title">Votre espace Loc<span class="brand-n">'N'</span>Joy</h1>
+      <p class="espace-sub">Choisissez votre entrée. Vos réservations d'un côté, la gestion de l'agence de l'autre.</p>
+
+      <div class="portal-grid">
+        <button class="portal-card" data-go="client">
+          <span class="portal-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <b>Espace particulier</b>
+          <span class="portal-desc">Suivez vos réservations, vos dates et vos totaux. Créez votre compte en une minute.</span>
+          <span class="portal-go">Entrer <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+
+        <button class="portal-card is-pro" data-go="admin">
+          <span class="portal-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="10.5" width="16" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <circle cx="12" cy="15.5" r="1.6" fill="currentColor"/>
+            </svg>
+          </span>
+          <b>Espace admin</b>
+          <span class="portal-desc">Réservé à l'équipe Loc'N'Joy : demandes reçues, statuts, chiffre d'affaires et export.</span>
+          <span class="portal-go">Se connecter <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+      </div>
+      <p class="espace-note">Cette page n'apparaît pas dans le référencement du site. L'accès admin est protégé par mot de passe.</p>
+    </div>
+  </section>
+
+  <!-- ============ 2. CONNEXION PARTICULIER ============ -->
+  <section class="view" id="view-client-auth" hidden>
+    <div class="auth-shell">
+      <div class="auth-card">
+        <button class="auth-back" data-go="portal">← Retour au portail</button>
+        <span class="tag light"><i></i>Espace particulier</span>
+        <h2 class="auth-title">Bon retour parmi nous</h2>
+
+        <div class="auth-tabs" role="tablist">
+          <button class="is-on" data-tab="login" role="tab" aria-selected="true">Connexion</button>
+          <button data-tab="signup" role="tab" aria-selected="false">Inscription</button>
+        </div>
+
+        <form id="loginForm" autocomplete="on">
+          <div class="field"><label for="l-email">Email</label><input type="email" id="l-email" required placeholder="vous@exemple.fr" autocomplete="email"></div>
+          <div class="field"><label for="l-pass">Mot de passe</label><input type="password" id="l-pass" required placeholder="••••••••" autocomplete="current-password"></div>
+          <button class="btn btn-block" type="submit">
+            <span class="btn-fill"></span>
+            <span class="btn-label"><span>Se connecter</span><span aria-hidden="true">Se connecter</span></span>
+          </button>
+        </form>
+
+        <form id="signupForm" hidden autocomplete="on">
+          <div class="field"><label for="s-name">Nom complet</label><input type="text" id="s-name" required placeholder="Camille Dubois" autocomplete="name"></div>
+          <div class="field-row">
+            <div class="field"><label for="s-email">Email</label><input type="email" id="s-email" required placeholder="vous@exemple.fr" autocomplete="email"></div>
+            <div class="field"><label for="s-phone">Téléphone</label><input type="tel" id="s-phone" placeholder="06 12 34 56 78" autocomplete="tel"></div>
+          </div>
+          <div class="field"><label for="s-pass">Mot de passe</label><input type="password" id="s-pass" required minlength="6" placeholder="6 caractères minimum" autocomplete="new-password"></div>
+          <button class="btn btn-block" type="submit">
+            <span class="btn-fill"></span>
+            <span class="btn-label"><span>Créer mon compte</span><span aria-hidden="true">Créer mon compte</span></span>
+          </button>
+        </form>
+
+        <p class="auth-note">Vos informations restent sur cet appareil : cette démonstration n'envoie rien sur un serveur.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. TABLEAU DE BORD PARTICULIER ============ -->
+  <section class="view" id="view-client-dash" hidden>
+    <div class="wrap espace-wrap">
+      <div class="dash-head">
+        <div>
+          <span class="tag light"><i></i>Tableau de bord</span>
+          <h1 class="espace-title">Bonjour, <span id="dashName" class="accent">—</span></h1>
+          <p class="espace-sub" id="dashEmail"></p>
+        </div>
+        <div class="dash-actions">
+          <a href="index.html#reserver" class="btn btn-sm">
+            <span class="btn-fill"></span>
+            <span class="btn-label"><span>Nouvelle réservation</span><span aria-hidden="true">Nouvelle réservation</span></span>
+          </a>
+          <button class="btn-ghost" id="clientLogout">Déconnexion</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><span class="kpi-lbl">Réservations</span><b class="kpi-val" id="kTotal">0</b></div>
+        <div class="kpi"><span class="kpi-lbl">À venir</span><b class="kpi-val" id="kUp">0</b></div>
+        <div class="kpi"><span class="kpi-lbl">Jours de route</span><b class="kpi-val" id="kDays">0</b></div>
+        <div class="kpi"><span class="kpi-lbl">Kilomètres inclus</span><b class="kpi-val" id="kKm">0</b></div>
+      </div>
+
+      <h2 class="dash-h2">Mes réservations</h2>
+      <div id="clientRes"></div>
+    </div>
+  </section>
+
+  <!-- ============ 4. CONNEXION ADMIN ============ -->
+  <section class="view" id="view-admin-auth" hidden>
+    <div class="auth-shell">
+      <div class="auth-card is-pro">
+        <button class="auth-back" data-go="portal">← Retour au portail</button>
+        <span class="tag light"><i></i>Espace admin</span>
+        <h2 class="auth-title">Accès équipe</h2>
+        <p class="auth-lead">Réservé à l'agence. Les demandes reçues depuis le site apparaissent ici.</p>
+
+        <form id="adminForm" autocomplete="off">
+          <div class="field"><label for="a-user">Identifiant</label><input type="email" id="a-user" required placeholder="locnjoy75@gmail.com"></div>
+          <div class="field"><label for="a-pass">Mot de passe</label><input type="password" id="a-pass" required placeholder="••••••••"></div>
+          <button class="btn btn-block" type="submit">
+            <span class="btn-fill"></span>
+            <span class="btn-label"><span>Déverrouiller</span><span aria-hidden="true">Déverrouiller</span></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. TABLEAU DE BORD ADMIN ============ -->
+  <section class="view" id="view-admin-dash" hidden>
+    <div class="wrap espace-wrap">
+      <div class="dash-head">
+        <div>
+          <span class="tag light"><i></i>Espace admin</span>
+          <h1 class="espace-title">Réservations</h1>
+          <p class="espace-sub">Toutes les demandes envoyées depuis le site, du plus récent au plus ancien.</p>
+        </div>
+        <div class="dash-actions">
+          <button class="btn btn-sm" id="adminExport">
+            <span class="btn-fill"></span>
+            <span class="btn-label"><span>Exporter en CSV</span><span aria-hidden="true">Exporter en CSV</span></span>
+          </button>
+          <button class="btn-ghost" id="adminLogout">Déconnexion</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><span class="kpi-lbl">Demandes</span><b class="kpi-val" id="kpTotal">0</b></div>
+        <div class="kpi"><span class="kpi-lbl">En attente</span><b class="kpi-val warn" id="kpWait">0</b></div>
+        <div class="kpi"><span class="kpi-lbl">Confirmées</span><b class="kpi-val ok" id="kpOk">0</b></div>
+        <div class="kpi"><span class="kpi-lbl">Chiffre d'affaires</span><b class="kpi-val" id="kpRev">0 €</b></div>
+      </div>
+
+      <div class="admin-tools">
+        <div class="filters" id="adminFilters" role="tablist">
+          <button class="chip is-on" data-f="all" role="tab" aria-selected="true">Toutes</button>
+          <button class="chip" data-f="wait" role="tab" aria-selected="false">En attente</button>
+          <button class="chip" data-f="ok" role="tab" aria-selected="false">Confirmées</button>
+          <button class="chip" data-f="done" role="tab" aria-selected="false">Terminées</button>
+          <button class="chip" data-f="no" role="tab" aria-selected="false">Refusées</button>
+        </div>
+        <input type="search" id="adminSearch" class="admin-search" placeholder="Rechercher un nom, un email, une voiture…" aria-label="Rechercher une réservation">
+      </div>
+
+      <div class="table-scroll">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Référence</th><th>Client</th><th>Voiture</th><th>Période</th><th>Total</th><th>Statut</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="adminRows"></tbody>
+        </table>
+      </div>
+      <p class="admin-empty" id="adminEmpty" hidden>Aucune réservation ne correspond à ce filtre.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ MODALE DÉTAIL ============ -->
+<div class="modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle" hidden>
+  <div class="modal-backdrop" id="detailBackdrop"></div>
+  <div class="modal-card detail-card">
+    <button class="modal-close" id="detailClose" aria-label="Fermer">✕</button>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/espace.js" defer></script>
+</body>
+</html>
